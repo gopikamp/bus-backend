@@ -26,6 +26,34 @@ app.post("/signup",async(req,res) => {
     console.log(register)
     res.json({"status":"success"})
 })
+app.post("/signin",(req,res)=>{
+    let input = req.body
+    registermodel.find({"email":req.body.email}).then(
+        (Response) => {
+            if (Response.length>0) {
+                let dbPassword = Response[0].password
+                console.log(dbPassword)
+                bcrypt.compare(input.password,dbPassword,(error,isMatch)=>{
+                    if (isMatch) {
+                        jwt.sign({email:input.email},"bus-app",{expiresIn:"1d"},
+                            (error,token)=>{
+                                if (error) {
+                                    res.json({"status":"unable to create token"})
+                                } else {
+                                    res.json({"status":"success","userid":Response[0]._id,"token":token})
+                                }
+                            }
+                        )
+                    } else {
+                        res.json({"status":"incorrect"})
+                    }
+                })
+            } else {
+                res.json({"status":"user not found"})
+            }
+        }
+    ).catch()
+})
 
 app.listen(8000,()=>{
     console.log("Server Started")
